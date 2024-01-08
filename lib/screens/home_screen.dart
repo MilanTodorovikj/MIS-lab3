@@ -39,6 +39,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
 
   Future<void> addExam(String subject, DateTime date, TimeOfDay time) {
+    User? user = FirebaseAuth.instance.currentUser;
     DateTime newDate = DateTime(
         date.year,
         date.month,
@@ -48,9 +49,18 @@ class _HomeScreenState extends State<HomeScreen> {
         0,
         0,
         0);
+    if(user!=null) {
+      return FirebaseFirestore.instance.collection('exams').add({
+        'subject': subject,
+        'date': newDate,
+        'userId': user.uid
+      });
+    }
+
     return FirebaseFirestore.instance.collection('exams').add({
       'subject': subject,
       'date': newDate,
+      'userId': 'invalid'
     });
   }
 
@@ -101,7 +111,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
         body: StreamBuilder<QuerySnapshot>(
-        stream: _itemsCollection.snapshots(),
+        stream: _itemsCollection.where('userId', isEqualTo: FirebaseAuth.instance.currentUser?.uid).snapshots(),
     builder: (context, snapshot) {
     if (snapshot.connectionState == ConnectionState.waiting) {
     return CircularProgressIndicator();
