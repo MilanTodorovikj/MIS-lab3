@@ -77,6 +77,24 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  void _deleteExam(String subject, DateTime date) {
+    User? user = FirebaseAuth.instance.currentUser;
+
+    if (user != null) {
+      // Find the document with matching subject, date, and userId
+      var query = _itemsCollection
+          .where('subject', isEqualTo: subject)
+          .where('date', isEqualTo: date)
+          .where('userId', isEqualTo: user.uid);
+
+      query.get().then((querySnapshot) {
+        querySnapshot.docs.forEach((doc) {
+          // Delete the document with the found ID
+          _itemsCollection.doc(doc.id).delete();
+        });
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -128,32 +146,56 @@ class _HomeScreenState extends State<HomeScreen> {
 
     // Now you have a list of items, you can use it as needed
     return GridView.builder(
-    itemCount: items.length,
-    itemBuilder: (context, index) {
-    return Card(
-    child: Column(
-    mainAxisAlignment: MainAxisAlignment.center,
-    children: [
-    Row(
-    mainAxisAlignment: MainAxisAlignment.center,
-    children: [
-    Text(items[index].subject, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 30),),
-
-
-    ],
-    ),
-      Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(DateFormat('yyyy-MM-dd HH:mm').format(items[index].date), style: const TextStyle(fontSize: 20, color: Colors.grey),)
-        ],
-      )
-    ],
-    ),
-    );
-    },
-    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-    crossAxisCount: 2),
+      itemCount: items.length,
+      itemBuilder: (context, index) {
+        return Card(
+          child: Stack(
+            children: [
+              Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Display Exam details
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        items[index].subject,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 30,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        DateFormat('yyyy-MM-dd HH:mm').format(items[index].date),
+                        style: const TextStyle(fontSize: 20, color: Colors.grey),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              Positioned(
+                top: 5.0, // Adjust the top position according to your preference
+                right: 5.0, // Adjust the right position according to your preference
+                child: IconButton(
+                  icon: Icon(Icons.delete_forever_rounded),
+                  onPressed: () {
+                    _deleteExam(items[index].subject, items[index].date);
+                  },
+                  color: Colors.red,
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+      ),
     );
     }));
     }
